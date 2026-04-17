@@ -109,7 +109,7 @@ Feature engineering was applied to improve the dataset’s predictive power:
 
 ---
 
-## eature Selection
+## Feature Selection
 
 ### Correlation Analysis
 
