@@ -186,6 +186,8 @@ These steps significantly improve the performance and reliability of machine lea
 ## Author
 
 **Moses Onyango**
+S13/07813/22
 BSc Computer Science – Egerton University
+
 
 ---
