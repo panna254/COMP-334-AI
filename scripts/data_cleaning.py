@@ -8,6 +8,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+def extract_deck(cabin_series):
+    """Extract deck letter from cabin values."""
+    return cabin_series.fillna('Unknown').astype(str).str[0].replace({'U': 'Unknown'})
+
 def load_data(train_path, test_path):
     """Load the Titanic dataset"""
     train = pd.read_csv(train_path)
@@ -68,14 +73,16 @@ def handle_missing_values(train, test):
         print(f"\n3. Fare: Filling {test['Fare'].isnull().sum()} missing in test with median: {fare_median:.2f}")
         test_clean['Fare'].fillna(fare_median, inplace=True)
     
-    # 4. Cabin - create indicator and drop
+    # 4. Cabin - create deck feature, create indicator, and drop original column
     cabin_missing_pct = (train['Cabin'].isnull().sum() / len(train)) * 100
-    print(f"\n4. Cabin: {cabin_missing_pct:.1f}% missing - dropping column")
+    print(f"\n4. Cabin: {cabin_missing_pct:.1f}% missing - extracting 'Deck' and dropping original column")
+    train_clean['Deck'] = extract_deck(train['Cabin'])
+    test_clean['Deck'] = extract_deck(test['Cabin'])
     train_clean['Cabin_Missing'] = train['Cabin'].isnull().astype(int)
     test_clean['Cabin_Missing'] = test['Cabin'].isnull().astype(int)
     train_clean.drop('Cabin', axis=1, inplace=True)
     test_clean.drop('Cabin', axis=1, inplace=True)
-    print("   - Added 'Cabin_Missing' indicator, dropped original column")
+    print("   - Added 'Deck' and 'Cabin_Missing', dropped original column")
     
     return train_clean, test_clean
 

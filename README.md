@@ -1,193 +1,178 @@
-# Titanic Survival Prediction – Data Cleaning & Feature Engineering
+# Titanic Survival Prediction - Data Preparation Pipeline
 
-## 📌 Project Overview
+## Project Overview
 
-This project focuses on analyzing the Titanic dataset to build a strong foundation for predictive modeling. The goal is to improve data quality and extract meaningful features that enhance the prediction of passenger survival.
+This project prepares the Titanic dataset for machine learning through a three-stage workflow:
 
-The workflow follows three key stages:
+1. Data cleaning
+2. Feature engineering
+3. Feature selection
 
-* Data Cleaning
-* Feature Engineering
-* Feature Selection
+The repository includes scripts, a notebook, and generated CSV outputs for each stage of the pipeline.
 
----
+## Objective
 
-## 🎯 Objective
+The main goal is to transform the raw Titanic dataset into model-ready and reduced-feature datasets by:
 
-To preprocess the Titanic dataset by:
+- handling missing values
+- treating outliers
+- creating informative features
+- encoding and scaling predictors
+- selecting the most useful features for downstream modeling
 
-* Handling missing values and inconsistencies
-* Engineering informative features
-* Selecting the most relevant variables for modeling
+## Project Structure
 
----
-
-## 📂 Project Structure
-
+```text
+COMP 334 AI/
+|-- data/
+|   |-- train.csv
+|   |-- test.csv
+|   |-- gender_submission.csv
+|   |-- train_cleaned.csv
+|   |-- test_cleaned.csv
+|   |-- train_engineered.csv
+|   |-- test_engineered.csv
+|   |-- train_model_ready.csv
+|   |-- test_model_ready.csv
+|   |-- train_selected.csv
+|   |-- test_selected.csv
+|   |-- feature_importance.csv
+|   `-- feature_correlation_review.csv
+|-- notebooks/
+|   |-- Titanic_Feature_Engineering.ipynb
+|   `-- outlier_treatment.png
+|-- scripts/
+|   |-- data_cleaning.py
+|   |-- feature_engineering.py
+|   `-- feature_selection.py
+|-- README.md
+`-- Requirements.txt
 ```
-titanic_assignment/
-│
-├── data/
-│   ├── train.csv
-│   ├── test.csv
-│   └── train_cleaned.csv
-│
-├── notebooks/
-│   └── Titanic_Feature_Engineering.ipynb
-│
-├── scripts/
-│   ├── data_cleaning.py
-│   ├── feature_engineering.py
-│   └── feature_selection.py
-│
-├── README.md
-└── requirements.txt
-```
 
----
+## Pipeline Summary
 
-## Data Cleaning
+### 1. Data Cleaning
 
-### Missing Value Handling
+Implemented in `scripts/data_cleaning.py`.
 
-* **Age**: Imputed using median due to skewness and presence of outliers
-* **Embarked**: Filled using mode since only a few values were missing
-* **Cabin**: Transformed into a new feature (`Deck`) before dropping due to excessive missing values
+This stage:
 
-### Outlier Handling
+- loads `data/train.csv` and `data/test.csv`
+- analyzes missing values in both datasets
+- imputes missing `Age` values using the training median
+- fills missing `Embarked` values using the mode
+- fills missing test-set `Fare` values using the training median
+- extracts `Deck` from `Cabin`
+- adds `Age_Missing` and `Cabin_Missing` indicator columns
+- drops the original `Cabin` column
+- standardizes `Sex` values
+- removes duplicate training rows if any exist
+- detects and caps outliers in `Age` and `Fare` using the IQR rule
+- saves an outlier visualization to `notebooks/outlier_treatment.png`
 
-* Extreme values in **Fare** were capped at the 99th percentile to reduce their influence
+Outputs:
 
-### Data Consistency
+- `data/train_cleaned.csv`
+- `data/test_cleaned.csv`
 
-* Standardized categorical values (e.g., `Sex`)
-* Removed duplicate records
+### 2. Feature Engineering
 
----
+Implemented in `scripts/feature_engineering.py`.
 
-## Feature Engineering
+This stage:
 
-Feature engineering was applied to improve the dataset’s predictive power:
+- loads cleaned train and test datasets
+- creates `FamilySize = SibSp + Parch + 1`
+- creates `IsAlone` as an indicator for solo travelers
+- creates `FarePerPerson`
+- extracts passenger `Title` from `Name`
+- normalizes titles such as `Mlle`, `Ms`, and `Mme`
+- groups uncommon titles into `Rare`
+- creates `AgeGroup` with these bands:
+  `Child`, `Teen`, `Adult`, `Senior`
+- creates `FareLog` using `log1p`
+- preserves or reconstructs `Deck` when needed
+- one-hot encodes categorical variables:
+  `Sex`, `Embarked`, `Title`, `Deck`, and `AgeGroup`
+- scales numeric predictors using `StandardScaler`
+- keeps `PassengerId` and `Survived` in the final training output
 
-### 🔹 Derived Features
+Outputs:
 
-* **FamilySize** = SibSp + Parch + 1
-* **IsAlone** = Indicator for passengers traveling alone
-* **FarePerPerson** = Fare divided by family size
+- `data/train_engineered.csv`
+- `data/test_engineered.csv`
+- `data/train_model_ready.csv`
+- `data/test_model_ready.csv`
 
-### 🔹 Title Extraction
+### 3. Feature Selection
 
-* Extracted titles (Mr, Mrs, Miss, etc.) from passenger names
-* Grouped rare titles into a single category
+Implemented in `scripts/feature_selection.py`.
 
-### 🔹 Deck Feature
+This stage:
 
-* Extracted from Cabin to represent passenger location
+- loads the model-ready datasets
+- separates identifiers and target labels
+- removes highly correlated features using a correlation threshold of `0.85`
+- keeps the feature with stronger correlation to `Survived` when redundant pairs are found
+- ranks retained features using `RandomForestClassifier`
+- selects the top `12` features by importance
+- exports both reduced datasets and analysis reports
 
-### 🔹 Age Groups
+Outputs:
 
-* Categorized into Child, Teen, Adult, and Senior
+- `data/train_selected.csv`
+- `data/test_selected.csv`
+- `data/feature_importance.csv`
+- `data/feature_correlation_review.csv`
 
----
+## How to Run
 
-## Feature Transformation
-
-* **Log Transformation** applied to Fare to reduce skewness
-* **Scaling** performed on numerical features for model compatibility
-
----
-
-## 🔢 Categorical Encoding
-
-* One-hot encoding applied to:
-
-  * Sex
-  * Embarked
-  * Title
-  * Deck
-  * AgeGroup
-
----
-
-## Feature Selection
-
-### Correlation Analysis
-
-* Identified relationships between features
-* Removed redundant variables
-
-### Feature Importance
-
-* Used Random Forest to rank features
-* Most important predictors:
-
-  * Sex
-  * Pclass
-  * Fare
-  * Title
-
----
-
-## Key Insights
-
-* Female passengers had significantly higher survival rates
-* Higher passenger class (Pclass) increased survival likelihood
-* Smaller families or individuals traveling alone had lower survival chances
-* Socioeconomic factors (Fare, Title) strongly influenced survival
-
----
-
-## ⚙️ How to Run the Project
-
-### 1. Clone the repository
+### 1. Install dependencies
 
 ```bash
-git clone <your-repo-link>
-cd titanic_assignment
+pip install -r Requirements.txt
 ```
 
-### 2. Install dependencies
+### 2. Run the pipeline scripts
+
+Run the scripts from the `scripts` folder so their relative paths resolve correctly:
 
 ```bash
-pip install -r requirements.txt
+cd scripts
+python data_cleaning.py
+python feature_engineering.py
+python feature_selection.py
 ```
 
-### 3. Run the notebook
+You can also explore the workflow interactively in:
 
 ```bash
 jupyter notebook notebooks/Titanic_Feature_Engineering.ipynb
 ```
 
----
-
 ## Requirements
 
-* Python 3.x
-* pandas
-* numpy
-* matplotlib
-* seaborn
-* scikit-learn
+The project uses:
 
----
+- Python 3.x
+- pandas 1.5.3
+- numpy 1.24.3
+- matplotlib 3.7.1
+- seaborn 0.12.2
+- scikit-learn 1.2.2
+- jupyter 1.0.0
 
-## Conclusion
+## Key Deliverables
 
-This project demonstrates the importance of:
+By the end of the workflow, the project produces:
 
-* Proper data preprocessing
-* Thoughtful feature engineering
-* Data-driven feature selection
-
-These steps significantly improve the performance and reliability of machine learning models.
-
----
+- cleaned datasets ready for further transformation
+- engineered datasets with domain-based features
+- model-ready datasets with encoded and scaled predictors
+- reduced datasets containing the selected top features
+- feature importance and correlation review reports
 
 ## Author
 
-**Moses Onyango**
-S13/07813/22
-BSc Computer Science – Egerton University
-
-
----
+**Moses Onyango**  
+BSc Computer Science - Egerton University
